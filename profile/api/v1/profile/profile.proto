@@ -8,6 +8,7 @@ import "google/protobuf/timestamp.proto";
 
 service ProfileService {
   rpc GetById(GetByIdRequest) returns (GetByIdResponse) {}
+  rpc CreateUser(CreateUserRequest) returns (CreateUserResponse) {}
 }
 
 message User {
@@ -24,3 +25,12 @@ message GetByIdRequest {
 message GetByIdResponse {
   User user = 1;
 }
+
+message CreateUserRequest {
+  string login = 1;
+}
+
+message CreateUserResponse {
+  int64 id = 1;
+}
+
