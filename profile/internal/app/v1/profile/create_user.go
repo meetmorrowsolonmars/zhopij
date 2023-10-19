@@ -10,8 +10,8 @@ import (
 )
 
 func (i *Implementation) CreateUser(ctx context.Context, request *profile.CreateUserRequest) (*profile.CreateUserResponse, error) {
-	for _, value := range i.db {
-		if request.Login == value {
+	for _, login:= range i.db {
+		if request.Login == login {
 			return nil, status.Error(codes.AlreadyExists, "login already exists")
 		}
 	}
