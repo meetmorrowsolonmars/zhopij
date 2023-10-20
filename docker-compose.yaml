@@ -1,0 +1,23 @@
+networks:
+  backend:
+
+services:
+  post_app:
+    build: ./post/
+    networks:
+      - backend
+    ports:
+      - "7002:82"
+      - "7004:84"
+    env_file:
+      - ./build/.env
+  db:
+    image: postgres:16
+    networks:
+      - backend
+    ports:
+      - "6543:5432"
+    volumes:
+      - "./post/scripts/initdb:/docker-entrypoint-initdb.d"
+    env_file:
+      - ./build/.env

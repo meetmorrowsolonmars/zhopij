@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package zhopij.post.v1.post;
+
+option go_package = "github.com/meetmorrowsolonmars/zhopij/post/internal/pb/api/v1/post";
+
+service PostService {
+  rpc CreatePost(CreatePostRequest) returns (CreatePostResponse) {}
+}
+
+message Post {
+  int64 id = 1;
+  int64 author_id = 2;
+  string title = 3;
+}
+
+message CreatePostRequest {
+  int64 author_id = 1;
+  string title = 2;
+}
+
+message CreatePostResponse {
+  int64 id = 1;
+}

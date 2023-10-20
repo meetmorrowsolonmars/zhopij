@@ -7,6 +7,7 @@ generate: install-bin-deps proto-deps-vendor
 	$(info Generate GRPC stubs...)
 
 	$(MAKE) -C profile generate
+	$(MAKE) -C post generate
 
 
 .PHONY: install-bin-deps
@@ -35,3 +36,12 @@ proto-deps-vendor:
 	curl -so vendor.proto/google/protobuf/descriptor.proto https://raw.githubusercontent.com/protocolbuffers/protobuf/main/src/google/protobuf/descriptor.proto && \
 	curl -so vendor.proto/google/protobuf/struct.proto https://github.com/protocolbuffers/protobuf/blob/main/src/google/protobuf/struct.proto && \
 	curl -so vendor.proto/google/protobuf/timestamp.proto https://raw.githubusercontent.com/protocolbuffers/protobuf/main/src/google/protobuf/timestamp.proto
+
+include ./build/.env
+export
+
+.PHONY: migrate-up
+migrate-up:
+	$(info Migrate...)
+
+	$(MAKE) -C post migrate-up
