@@ -14,4 +14,6 @@ git checkout -b dev
 git status
 # добавили изменения
 git add .
+git commit -m "text"
+git push
 ```
