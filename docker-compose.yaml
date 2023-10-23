@@ -2,8 +2,8 @@ networks:
   backend:
 
 services:
-  post_app:
-    build: ./post/
+  quiz_app:
+    build: ./quiz/
     networks:
       - backend
     ports:
@@ -18,6 +18,6 @@ services:
     ports:
       - "6543:5432"
     volumes:
-      - "./post/scripts/initdb:/docker-entrypoint-initdb.d"
+      - "./quiz/scripts/initdb:/docker-entrypoint-initdb.d"
     env_file:
       - ./build/.env

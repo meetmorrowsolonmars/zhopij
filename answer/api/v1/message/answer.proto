@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+package zhopij.answer.v1.message;
+
+option go_package = "github.com/meetmorrowsolonmars/zhopij/answer/internal/pb/api/v1/message";
+
+enum EventType {
+  EVENT_TYPE_UNKNOWN = 0;
+  CREATE = 1;
+}
+
+enum MessageVersion {
+  MESSAGE_VERSION_UNKNOWN = 0;
+  V1_0_0 = 1;
+}
+
+message Meta {
+  string message_id = 1;
+  MessageVersion version = 2;
+  EventType event = 3;
+}
+
+message BaseEvent {
+  Meta meta = 1;
+  Event event = 2;
+
+  message Event {
+  }
+}
+
+message V1CreateAnswerEvent {
+  Meta meta = 1;
+  Event event = 2;
+
+  message Event {
+    int64 quiz_id = 1;
+    int64 user_id = 2;
+  }
+}

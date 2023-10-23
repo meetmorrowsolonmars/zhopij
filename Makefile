@@ -6,8 +6,9 @@ VENDOR_PROTO:=$(CURDIR)/vendor.proto
 generate: install-bin-deps proto-deps-vendor
 	$(info Generate GRPC stubs...)
 
+	$(MAKE) -C answer generate
 	$(MAKE) -C profile generate
-	$(MAKE) -C post generate
+	$(MAKE) -C quiz generate
 
 
 .PHONY: install-bin-deps
@@ -44,4 +45,4 @@ export
 migrate-up:
 	$(info Migrate...)
 
-	$(MAKE) -C post migrate-up
+	$(MAKE) -C quiz migrate-up
