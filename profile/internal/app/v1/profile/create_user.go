@@ -10,17 +10,15 @@ import (
 )
 
 func (i *Implementation) CreateUser(ctx context.Context, request *profile.CreateUserRequest) (*profile.CreateUserResponse, error) {
-	for _, login:= range i.db {
-		if request.Login == login {
-			return nil, status.Error(codes.AlreadyExists, "login already exists")
-		}
+	_, exists := i.db.FindLogin(request.Login)
+	if exists {
+		return nil, status.Error(codes.AlreadyExists, "login already exists")
 	}
 
-	id := int64(len(i.db) + 1)
-	i.db[id] = request.Login
+	user := i.db.StoreUser(request.Login)
 
 	return &profile.CreateUserResponse{
-		Id: id,
+		Id: user.Id,
 	}, nil
 
 }
