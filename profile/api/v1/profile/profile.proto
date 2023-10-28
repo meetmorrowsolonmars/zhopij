@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package zhopij.profile.v1.profile;
+
+option go_package = "github.com/meetmorrowsolonmars/zhopij/profile/internal/pb/api/v1/profile";
+
+import "google/protobuf/timestamp.proto";
+
+service ProfileService {
+  rpc GetById(GetByIdRequest) returns (GetByIdResponse) {}
+}
+
+message User {
+  int64 id = 1;
+  string login = 2;
+  google.protobuf.Timestamp created_at = 3;
+  google.protobuf.Timestamp updated_at = 4;
+}
+
+message GetByIdRequest {
+  int64 id = 1;
+}
+
+message GetByIdResponse {
+  User user = 1;
+}

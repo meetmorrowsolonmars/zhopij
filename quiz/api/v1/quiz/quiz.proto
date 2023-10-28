@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package zhopij.quiz.v1.quiz;
+
+option go_package = "github.com/meetmorrowsolonmars/zhopij/quiz/internal/pb/api/v1/quiz";
+
+service QuizService {
+  rpc CreateQuiz(CreateQuizRequest) returns (CreateQuizResponse) {}
+}
+
+message Quiz {
+  int64 id = 1;
+  int64 author_id = 2;
+  string title = 3;
+}
+
+message CreateQuizRequest {
+  int64 author_id = 1;
+  string title = 2;
+}
+
+message CreateQuizResponse {
+  int64 id = 1;
+}
