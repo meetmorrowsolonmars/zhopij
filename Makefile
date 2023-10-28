@@ -3,7 +3,13 @@ LOCAL_BIN:=$(CURDIR)/bin
 VENDOR_PROTO:=$(CURDIR)/vendor.proto
 
 .PHONY: generate
-generate: install-bin-deps proto-deps-vendor
+generate: install-bin-deps proto-deps-vendor .generate
+
+.PHONY: fast-generate
+fast-generate: .generate
+
+.PHONY: .generate
+.generate:
 	$(info Generate GRPC stubs...)
 
 	$(MAKE) -C answer generate

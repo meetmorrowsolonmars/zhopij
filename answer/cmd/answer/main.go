@@ -2,86 +2,129 @@ package main
 
 import (
 	"context"
-	"log"
+	"net"
+	"net/http"
+	"net/http/pprof"
+	"os/signal"
+	"syscall"
 
 	"github.com/IBM/sarama"
-	"github.com/google/uuid"
+	grpcprom "github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"go.uber.org/zap"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 	"google.golang.org/protobuf/encoding/protojson"
 
-	"github.com/meetmorrowsolonmars/zhopij/answer/internal/pb/api/v1/message"
+	"github.com/meetmorrowsolonmars/zhopij/answer/internal/app/v1/debug"
+	"github.com/meetmorrowsolonmars/zhopij/answer/internal/pkg/consumers"
+	"github.com/meetmorrowsolonmars/zhopij/answer/internal/pkg/producers"
 )
 
 func main() {
-	log.Println("Hello, World from Answer!")
+	const (
+		ServerAddressGRPC  = ":82"
+		ServerAddressDebug = ":84"
+	)
 
-	msg := &message.V1CreateAnswerEvent{
-		Meta: &message.Meta{
-			MessageId: uuid.New().String(),
-			Version:   message.MessageVersion_V1_0_0,
-			Event:     message.EventType_CREATE,
-		},
-		Event: &message.V1CreateAnswerEvent_Event{
-			QuizId: 10,
-			UserId: 200,
-		},
-	}
+	// logger setup
+	logger := zap.Must(zap.NewProductionConfig().Build()).Sugar()
+	defer func() {
+		_ = logger.Sync()
+	}()
 
-	payload, err := protojson.MarshalOptions{
-		Multiline:      true,
-		UseProtoNames:  true,
-		UseEnumNumbers: false,
-	}.Marshal(msg)
-	if err != nil {
-		log.Fatalln("can't marshal message")
-	}
+	// metrics setup
+	metrics := grpcprom.NewServerMetrics(grpcprom.WithServerHandlingTimeHistogram())
+	registry := prometheus.NewRegistry()
+	registry.MustRegister(metrics)
 
-	log.Println(string(payload))
+	// graceful shutdown
+	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
+	defer cancel()
 
-	brokers := []string{"kafka:29092"}
-	groupID := "answer"
-	consumerGroupConfig := sarama.NewConfig()
-	consumerGroupConfig.Consumer.Group.Rebalance.GroupStrategies = []sarama.BalanceStrategy{
+	// kafka setup
+	// TODO: move to config
+	const (
+		broker               = "kafka:29092"
+		consumerGroupID      = "answer"
+		answerEventTopicName = "answer_events_test"
+	)
+
+	saramaConfig := sarama.NewConfig()
+	saramaConfig.Consumer.Group.Rebalance.GroupStrategies = []sarama.BalanceStrategy{
 		sarama.NewBalanceStrategyRoundRobin(),
 		sarama.NewBalanceStrategyRange(),
 	}
-	// TODO: test it
-	consumerGroupConfig.Consumer.Offsets.Initial = sarama.OffsetNewest
+	saramaConfig.Consumer.Offsets.Initial = sarama.OffsetNewest
+	saramaConfig.Producer.Return.Successes = true
+	saramaConfig.Producer.Return.Errors = true
 
-	consumerGroup, err := sarama.NewConsumerGroup(brokers, groupID, consumerGroupConfig)
+	consumerGroup, err := sarama.NewConsumerGroup([]string{broker}, consumerGroupID, saramaConfig)
 	if err != nil {
-		log.Fatalf("can't create consumer group: %s", err)
+		logger.Fatalf("can't create consumer group: %s", err)
 	}
 
-	ctx := context.Background()
-	err = consumerGroup.Consume(ctx, []string{"answers_test"}, &handler{})
+	syncProducer, err := sarama.NewSyncProducer([]string{broker}, saramaConfig)
 	if err != nil {
-		log.Fatalf("can't start consumer group: %s", err)
+		logger.Fatalf("can't create sync producer: %s", err)
 	}
-}
 
-type handler struct {
-}
+	// domain services setup
+	echoConsumer := consumers.NewEchoConsumer(logger)
+	eventsProducer := producers.NewAnswerEventsProducer(answerEventTopicName, syncProducer)
 
-func (h handler) Setup(_ sarama.ConsumerGroupSession) error {
-	return nil
-}
+	// grpc services setup
+	debugGrpcServer := debug.NewDebugServiceImplementation(eventsProducer, protojson.MarshalOptions{
+		UseProtoNames:  true,
+		UseEnumNumbers: false,
+	})
 
-func (h handler) Cleanup(_ sarama.ConsumerGroupSession) error {
-	return nil
-}
+	// grpc server setup
+	server := grpc.NewServer(grpc.ChainUnaryInterceptor(metrics.UnaryServerInterceptor()))
 
-func (h handler) ConsumeClaim(session sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) error {
-	for {
-		select {
-		case msg, ok := <-claim.Messages():
-			if !ok {
-				log.Printf("msg channel was closed")
-				return nil
-			}
-			log.Printf("Message claimed: value = %s, timestamp = %v, topic = %s", string(msg.Value), msg.Timestamp, msg.Topic)
-			session.MarkMessage(msg, "")
-		case <-session.Context().Done():
-			return nil
+	debug.RegisterGRPCServer(server, debugGrpcServer)
+
+	metrics.InitializeMetrics(server)
+	reflection.Register(server)
+
+	go func() {
+		<-ctx.Done()
+		server.Stop()
+	}()
+
+	// kafka start consumer group
+	go func() {
+		err := consumerGroup.Consume(ctx, []string{answerEventTopicName}, echoConsumer)
+		if err != nil {
+			logger.Fatalf("can't start consumer group: %s", err)
 		}
+	}()
+
+	// debug server startup
+	go func() {
+		mux := http.NewServeMux()
+		mux.Handle("/debug", promhttp.HandlerFor(registry, promhttp.HandlerOpts{Registry: registry}))
+		mux.HandleFunc("/debug/pprof/", pprof.Index)
+		mux.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
+		mux.HandleFunc("/debug/pprof/profile", pprof.Profile)
+		mux.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
+		mux.HandleFunc("/debug/pprof/trace", pprof.Trace)
+
+		if err := http.ListenAndServe(ServerAddressDebug, mux); err != nil {
+			logger.Fatalf("can't start app: %s", err)
+		}
+	}()
+
+	// grpc server startup
+	logger.Infof("Server startup on port: %s", ServerAddressGRPC)
+
+	lis, err := net.Listen("tcp", ServerAddressGRPC)
+	if err != nil {
+		logger.Fatalf("can't start app: %s", err)
+	}
+
+	if err = server.Serve(lis); err != nil {
+		logger.Fatalf("can't start app: %s", err)
 	}
 }
