@@ -1,8 +1,6 @@
 package main
 
 import (
-	profile2 "github.com/meetmorrowsolonmars/zhopij/profile/internal/app/v1/profile"
-	"github.com/meetmorrowsolonmars/zhopij/profile/internal/pb/api/v1/profile"
 	"net"
 
 	grpcprom "github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus"
@@ -10,6 +8,8 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
+
+	"github.com/meetmorrowsolonmars/zhopij/profile/internal/app/v1/profile"
 )
 
 func main() {
@@ -34,7 +34,7 @@ func main() {
 		metrics.UnaryServerInterceptor(),
 	))
 
-	profile.RegisterProfileServiceServer(server, profile2.NewProfileService())
+	profile.RegisterGRPCServer(server, profile.NewProfileServiceImplementation())
 
 	metrics.InitializeMetrics(server)
 	reflection.Register(server)

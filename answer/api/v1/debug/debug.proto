@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package zhopij.answer.v1.debug;
+
+option go_package = "github.com/meetmorrowsolonmars/zhopij/answer/internal/pb/api/v1/debug";
+
+service DebugService {
+  rpc ProduceCreateAnswerEvent(ProduceCreateAnswerEventRequest) returns (ProduceCreateAnswerEventResponse) {}
+}
+
+message ProduceCreateAnswerEventRequest {
+  int64 quiz_id = 1;
+  int64 author_id = 2;
+}
+
+message ProduceCreateAnswerEventResponse {
+}

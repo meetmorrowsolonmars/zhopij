@@ -1,0 +1,10 @@
+#!/bin/bash
+set -e
+
+psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-EOSQL
+	CREATE USER quiz_user WITH PASSWORD '$POSTGRES_QUIZ_USER_PASSWORD';
+	CREATE DATABASE quiz;
+
+	ALTER DATABASE quiz OWNER TO quiz_user;
+	GRANT ALL PRIVILEGES ON DATABASE quiz TO quiz_user;
+EOSQL

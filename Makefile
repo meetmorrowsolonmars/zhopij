@@ -3,10 +3,18 @@ LOCAL_BIN:=$(CURDIR)/bin
 VENDOR_PROTO:=$(CURDIR)/vendor.proto
 
 .PHONY: generate
-generate: install-bin-deps proto-deps-vendor
+generate: install-bin-deps proto-deps-vendor .generate
+
+.PHONY: fast-generate
+fast-generate: .generate
+
+.PHONY: .generate
+.generate:
 	$(info Generate GRPC stubs...)
 
+	$(MAKE) -C answer generate
 	$(MAKE) -C profile generate
+	$(MAKE) -C quiz generate
 
 
 .PHONY: install-bin-deps
@@ -35,3 +43,13 @@ proto-deps-vendor:
 	curl -so vendor.proto/google/protobuf/descriptor.proto https://raw.githubusercontent.com/protocolbuffers/protobuf/main/src/google/protobuf/descriptor.proto && \
 	curl -so vendor.proto/google/protobuf/struct.proto https://github.com/protocolbuffers/protobuf/blob/main/src/google/protobuf/struct.proto && \
 	curl -so vendor.proto/google/protobuf/timestamp.proto https://raw.githubusercontent.com/protocolbuffers/protobuf/main/src/google/protobuf/timestamp.proto
+
+include ./build/.env
+export
+
+.PHONY: migrate-up
+migrate-up:
+	$(info Migrate...)
+
+	$(MAKE) -C quiz migrate-up
+	$(MAKE) -C answer migrate-up
