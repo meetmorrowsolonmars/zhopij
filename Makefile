@@ -52,3 +52,4 @@ migrate-up:
 	$(info Migrate...)
 
 	$(MAKE) -C quiz migrate-up
+	$(MAKE) -C answer migrate-up

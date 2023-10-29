@@ -13,3 +13,9 @@ generate:
     		api/v1/debug/debug.proto \
 			api/v1/message/answer.proto && \
 		go mod tidy
+
+.PHONY: migrate-up
+migrate-up:
+	$(info Migrate Answer...)
+
+	goose --dir ./tools/migrations postgres "user=$(POSTGRES_ANSWER_USER) password=$(POSTGRES_ANSWER_USER_PASSWORD) database=$(POSTGRES_ANSWER_DB) host=$(POSTGRES_EXTERNAL_HOST) port=$(POSTGRES_EXTERNAL_PORT) sslmode=disable" up
