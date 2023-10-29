@@ -1,7 +1,7 @@
 package domain
 
-type Quiz struct {
+type Answer struct {
 	ID       int64
+	QuizID   int64
 	AuthorID int64
-	Title    string
 }

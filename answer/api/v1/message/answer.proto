@@ -34,6 +34,6 @@ message V1CreateAnswerEvent {
 
   message Event {
     int64 quiz_id = 1;
-    int64 user_id = 2;
+    int64 author_id = 2;
   }
 }
