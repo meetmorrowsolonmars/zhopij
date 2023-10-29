@@ -10,13 +10,15 @@ import (
 	"github.com/meetmorrowsolonmars/zhopij/profile/internal/pb/api/v1/profile"
 )
 
-func (i *Implementation) GetById(ctx context.Context, request *profile.GetByIdRequest) (*profile.GetByIdResponse, error) {
-	user, exists := i.db.GetUser(request.Id)
+func (i *Implementation) GetByLogin(ctx context.Context, request *profile.GetByLoginRequest) (*profile.GetByLoginResponse, error) {
+	id, exists := i.db.FindLogin(request.Login)
 	if !exists {
 		return nil, status.Error(codes.NotFound, "profile not found")
 	}
 
-	return &profile.GetByIdResponse{
+	user, _ := i.db.GetUser(id)
+
+	return &profile.GetByLoginResponse{
 		User: &profile.User{
 			Id:        user.Id,
 			Login:     user.Login,

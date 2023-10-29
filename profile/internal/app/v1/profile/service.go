@@ -3,18 +3,19 @@ package profile
 import (
 	"google.golang.org/grpc"
 
+	"github.com/meetmorrowsolonmars/zhopij/profile/internal/domain"
 	desc "github.com/meetmorrowsolonmars/zhopij/profile/internal/pb/api/v1/profile"
 )
 
 type Implementation struct {
 	desc.UnimplementedProfileServiceServer
 
-	db map[int64]string
+	db *domain.DB
 }
 
 func NewProfileServiceImplementation() *Implementation {
 	return &Implementation{
-		db: make(map[int64]string),
+		db: domain.NewDB(),
 	}
 }
 
