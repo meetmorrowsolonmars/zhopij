@@ -28,7 +28,7 @@ func (e *EchoConsumer) ConsumeClaim(session sarama.ConsumerGroupSession, claim s
 		select {
 		case msg, ok := <-claim.Messages():
 			if !ok {
-				e.logger.Infof("msg channel was closed")
+				e.logger.Info("msg channel was closed")
 				return nil
 			}
 

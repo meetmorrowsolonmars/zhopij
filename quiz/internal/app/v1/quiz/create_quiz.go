@@ -16,7 +16,7 @@ func (i *Implementation) CreateQuiz(ctx context.Context, request *desc.CreateQui
 	}
 
 	id, err := i.service.Create(ctx, &domain.Quiz{
-		AuthorId: request.AuthorId,
+		AuthorID: request.AuthorId,
 		Title:    request.Title,
 	})
 	if err != nil {

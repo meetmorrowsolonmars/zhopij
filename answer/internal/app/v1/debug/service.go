@@ -2,26 +2,24 @@ package debug
 
 import (
 	"google.golang.org/grpc"
-	"google.golang.org/protobuf/encoding/protojson"
 
+	"github.com/meetmorrowsolonmars/zhopij/answer/internal/domain"
 	desc "github.com/meetmorrowsolonmars/zhopij/answer/internal/pb/api/v1/debug"
 )
 
 type AnswerEventProducer interface {
-	SendCreateEvent(msg []byte) error
+	SendCreateEvent(answer *domain.Answer) error
 }
 
 type Implementation struct {
 	desc.UnimplementedDebugServiceServer
 
-	producer  AnswerEventProducer
-	marshaler protojson.MarshalOptions
+	producer AnswerEventProducer
 }
 
-func NewDebugServiceImplementation(producer AnswerEventProducer, marshaler protojson.MarshalOptions) *Implementation {
+func NewDebugServiceImplementation(producer AnswerEventProducer) *Implementation {
 	return &Implementation{
-		producer:  producer,
-		marshaler: marshaler,
+		producer: producer,
 	}
 }
 

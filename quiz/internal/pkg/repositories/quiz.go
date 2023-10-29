@@ -27,7 +27,7 @@ func (r *QuizRepository) Create(ctx context.Context, quiz *domain.Quiz) (int64, 
 	ctx, cancel := context.WithTimeout(ctx, r.timeout)
 	defer cancel()
 
-	row := r.db.QueryRow(ctx, query, quiz.AuthorId, quiz.Title)
+	row := r.db.QueryRow(ctx, query, quiz.AuthorID, quiz.Title)
 	err := row.Scan(&quiz.ID)
 	return quiz.ID, err
 }
